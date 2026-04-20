@@ -2,8 +2,13 @@ name: Generate Snake
 
 on:
   schedule:
+    # Runs every 12 hours
     - cron: "0 */12 * * *"
   workflow_dispatch:
+  # Also run on every push to main to test it
+  push:
+    branches:
+    - main
 
 permissions:
   contents: write
@@ -11,19 +16,23 @@ permissions:
 jobs:
   generate:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
 
     steps:
-      - name: Generate snake
+      # Step 1: Generate the snake files based on your contributions
+      - name: generate-snake-game-from-github-contribution-grid
         uses: Platane/snk@v3
         with:
-          github_user_name: AchintyaCodes
+          github_user_name: ${{ github.repository_owner }}
           outputs: |
             dist/github-contribution-grid-snake.svg
-            dist/github-contribution-grid-snake-dark.svg
+            dist/github-contribution-grid-snake-dark.svg?palette=github-dark
 
-      - name: Push to output branch
-        uses: peaceiris/actions-gh-pages@v3
+      # Step 2: Push the generated SVG files to the 'output' branch
+      - name: push github-contribution-grid-snake.svg to the output branch
+        uses: crazy-max/ghaction-github-pages@v3.1.0
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_branch: output
-          publish_dir: dist
+          target_branch: output
+          build_dir: dist
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
